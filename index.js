@@ -3,7 +3,7 @@ var cheerio = require("cheerio");
 var URL = require("url-parse");
 
 var startPage = "https://www.moontv.fi/";
-var wordSearch = "nigger";
+var wordSearch = "lol";
 var maxPages = 1000;
 
 var PagesVisited = {};
