@@ -2,9 +2,9 @@ var request = require('request');
 var cheerio = require("cheerio");
 var URL = require("url-parse");
 
-var startPage = "http://www.url.com";
-var wordSearch = "lol";
-var maxPages = 10000;
+var startPage = "https://www.moontv.fi/";
+var wordSearch = "nigger";
+var maxPages = 1000;
 
 var PagesVisited = {};
 var NumPagesVisited = 0;
@@ -12,6 +12,8 @@ var PagesToVisit = [];
 var url = new URL(startPage);
 var baseUrl = url.protocol + "//" + url.hostname;
 var results = [];
+var strangeResults =[];
+var errorsearch = true;
 
 
 
@@ -20,24 +22,48 @@ crawl();
 
 function crawl(){
 
-    if(NumPagesVisited > maxPages){
-        console.log("Max page amount visited...");
-        console.log("Results: ");
-        for (var i=0; i<results.length;i++){
-            console.log(results[i]);
-        }
+    try{
+        if(NumPagesVisited > maxPages){
+            console.log("Max page amount visited");
+            if (errorsearch === false){
+                console.log("Results: ");
+                for (var i=0; i<results.length;i++){
+                    console.log(results[i]);
+
+                }
+            }else{
+                console.log("Stranges Results: ");
+                for (var x=0; i<strangeResults.length;x++){
+                    console.log(strangeResults[x]);
+                }
+            }
         return
-    }
-    var nextPage = PagesToVisit.pop();
-    if(nextPage in PagesVisited){
-        crawl();
-    }else {
-        if(NumPagesVisited % 5 == 0){
-            visitPage(nextPage, crawl);
-            console.log("[-} Pages visited: " + NumPagesVisited + ", pages to visit: " + PagesToVisit.length);
-        }else {
-            visitPage(nextPage, crawl);
         }
+        var nextPage = PagesToVisit.pop();
+        if(nextPage in PagesVisited){
+            crawl();
+            return
+        }else if(nextPage == undefined){
+            console.log("-------------------------------");
+            console.log("[-] SCAN FINISHED NO MORE LINKS");
+            console.log("[-} Pages visited: " + NumPagesVisited);
+            console.log("-------------------------------");
+            return
+        }
+        else {
+
+            if((NumPagesVisited % 10) === 0){
+                visitPage(nextPage, crawl);
+                console.log("[-} Pages visited: " + NumPagesVisited + ", Links to check: " + PagesToVisit.length);
+                return
+            }else {
+                visitPage(nextPage, crawl);
+                return
+            }
+        }
+    }catch (err) {
+        console.log(err);
+        crawl();
     }
 }
 
@@ -50,15 +76,21 @@ function visitPage(url, callback) {
     //console.log("now visiting page " + url);
     request(url, function(error, response, body) {
         if(response.statusCode !== 200) {
+            strangeResults.push(response.statusCode);
+            console.log(response.statusCode + " @ page: " + url);
             callback();
             return;
+        }
+        else if(response.statusCode == undefined){
+            console.log("[-] Response was undefined")
+            callback();
         }
         // Parse the document body
         var $ = cheerio.load(body);
         var isWordFound = searchWord($, wordSearch);
         if(isWordFound) {
             console.log('[+] Word ' + wordSearch + ' found at page ' + url);
-            results.push(url)
+            results.push(url);
             collectLinks($);
             callback();
         } else {
@@ -85,13 +117,16 @@ function collectLinks($){
     relativeLinks.each(function (){
         allRelative.push($(this).attr('href'));
         PagesToVisit.push(baseUrl + $(this).attr('href'));
-    })
+    });
     //COLLECT ABSOLUTE
     var absoluteLinks = $("a[href^='http']");
     absoluteLinks.each(function() {
         allAbsolute.push($(this).attr('href'));
     });
+    if(NumPagesVisited === 1){
+        console.log("[+] Found " + allRelative.length + " relative links to start with" + " and " + allAbsolute.length + " absolute links" + "\r");
+    }
 
-    console.log("[+] Found " + allRelative.length + " relative links to add" + " and " + allAbsolute.length + " absolute links" + "\r");
+
 
 }
