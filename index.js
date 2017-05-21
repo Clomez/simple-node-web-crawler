@@ -2,8 +2,8 @@ var request = require('request');
 var cheerio = require("cheerio");
 var URL = require("url-parse");
 
-var startPage = "http://www.arstechnica.com";
-var wordSearch = "nigger";
+var startPage = "http://www.url.com";
+var wordSearch = "lol";
 var maxPages = 10000;
 
 var PagesVisited = {};
